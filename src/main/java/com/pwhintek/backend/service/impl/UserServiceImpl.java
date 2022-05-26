@@ -1,0 +1,159 @@
+package com.pwhintek.backend.service.impl;
+
+import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.crypto.digest.DigestUtil;
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.pwhintek.backend.dto.DetailedUserInfoDTO;
+import com.pwhintek.backend.dto.Result;
+import com.pwhintek.backend.dto.SignDTO;
+import com.pwhintek.backend.entity.User;
+import com.pwhintek.backend.exception.userinfo.ErrorLoginException;
+import com.pwhintek.backend.exception.userinfo.NotFoundUserException;
+import com.pwhintek.backend.exception.userinfo.UpdateFailException;
+import com.pwhintek.backend.exception.userinfo.UserInfoIdempotenceException;
+import com.pwhintek.backend.mapper.UserMapper;
+import com.pwhintek.backend.service.UserService;
+import com.pwhintek.backend.utils.RedisStorageSolution;
+import com.pwhintek.backend.utils.RegexUtils;
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
+import static com.pwhintek.backend.constant.RedisConstants.*;
+import static com.pwhintek.backend.constant.UserInfoConstants.*;
+
+/**
+ * 针对表【t_user(用户信息表)】的数据库操作Service实现
+ *
+ * @author chillyblaze
+ * @since 2022-04-22 11:07:13
+ */
+@Service
+@AllArgsConstructor
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+
+    private RedisStorageSolution redisStorageSolution;
+
+    /**
+     * 注册服务实现
+     *
+     * @param signUpForm 前端传递表单信息
+     * @author ChillyBlaze
+     */
+    @Override
+    public void signUp(SignDTO signUpForm) {
+        // 获取表单信息
+        String username = signUpForm.getUsername();
+        String password = signUpForm.getPassword();
+        String nickname = signUpForm.getNickname();
+
+        // 验证信息是否正确合法，如果不合法就抛出异常
+        RegexUtils.isUsername(username);
+        RegexUtils.isPassword(password);
+        RegexUtils.isNickName(nickname);
+
+        // 验证数据库中是否存在该用户
+        if (lambdaQuery().eq(User::getUsername, username).exists())
+            throw UserInfoIdempotenceException.getSignUpInstance(signUpForm);
+
+        // 没有，则存入数据库，返回响应
+        signUpForm.setPassword(DigestUtil.sha256Hex(password));
+        save(BeanUtil.toBean(signUpForm, User.class));
+    }
+
+    /**
+     * 登录服务实现
+     *
+     * @author ChillyBlaze
+     * @since 23/04/2022 21:56
+     */
+    @Override
+    public void login(SignDTO signDTO) {
+        // 判断用户名密码是否合法
+        String username = signDTO.getUsername();
+        String password = signDTO.getPassword();
+        RegexUtils.isUsername(username);
+        RegexUtils.isPassword(password);
+        // 验证用户名密码正确性
+        password = DigestUtil.sha256Hex(password);
+        User user = lambdaQuery()
+                .eq(User::getUsername, username)
+                .eq(User::getPassword, password)
+                .one();
+        // 错误，抛出异常，返回错误
+        if (ObjectUtil.isNull(user))
+            throw ErrorLoginException.getInstance(signDTO);
+        // 获取用户id登录
+        Long id = user.getId();
+        StpUtil.login(id);
+        // 将用户信息存入Redis中
+        DetailedUserInfoDTO dto = BeanUtil.copyProperties(user, DetailedUserInfoDTO.class);
+        redisStorageSolution.saveByTTL(USER_PREFIX + INFO_PREFIX + id, dto, USER_INFO_TTL, TimeUnit.MINUTES);
+    }
+
+    /**
+     * 查询Redis或数据库中的信息
+     *
+     * @author ChillyBlaze
+     * @since 23/04/2022 21:58
+     */
+    @Override
+    public DetailedUserInfoDTO userInfo(String column, Function<String, User> method) {
+        User user = redisStorageSolution.queryWithPassThrough(USER_PREFIX + INFO_PREFIX, column, User.class, method, USER_INFO_TTL, TimeUnit.MINUTES);
+        if (ObjectUtil.isNull(user)) {
+            throw NotFoundUserException.newInstance();
+        }
+        return BeanUtil.copyProperties(user, DetailedUserInfoDTO.class);
+    }
+
+    /**
+     * 用户登出，逻辑删除用户信息
+     *
+     * @author ChillyBlaze
+     * @since 24/04/2022 14:13
+     */
+    @Override
+    public void deleteUser(String id) {
+        StpUtil.logout(id);
+        removeById(id);
+        redisStorageSolution.deleteByKey(USER_PREFIX + INFO_PREFIX + id);
+    }
+
+    public void updateInfo(String updateInfo,
+                           String type) {
+        // 获取锁
+        String id = StpUtil.getLoginIdAsString();
+        String key = USER_PREFIX + LOCK_PREFIX + id;
+        String keyUser = USER_PREFIX + INFO_PREFIX + id;
+        if (!redisStorageSolution.tryLock(key)) {
+            throw UserInfoIdempotenceException.getUpdateInstance(updateInfo, type);
+        }
+        // 数据库更新
+        if (type.equals(DATABASE_PASSWORD)) {
+            updateInfo = DigestUtil.sha256Hex(updateInfo);
+        }
+        String s = JSONUtil.createObj().set("id", id).set(type, updateInfo).toString();
+        if (type.equals(DATABASE_USERNAME) && lambdaQuery().eq(User::getUsername, updateInfo).exists()) {
+            throw UpdateFailException.getInstance(INVALID_USERNAME, s);
+        }
+        UpdateWrapper<User> wrapper = new UpdateWrapper<>();
+        wrapper.eq(DATABASE_ID, id).set(type, updateInfo);
+        if (!update(wrapper)) {
+            throw UpdateFailException.getInstance(s);
+        }
+        // 删除redis信息
+        redisStorageSolution.deleteByKey(keyUser);
+        // 释放锁
+        redisStorageSolution.unlock(key);
+    }
+}
+
+
+
+
