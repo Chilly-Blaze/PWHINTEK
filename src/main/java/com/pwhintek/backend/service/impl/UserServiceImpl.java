@@ -8,7 +8,6 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.pwhintek.backend.dto.DetailedUserInfoDTO;
-import com.pwhintek.backend.dto.Result;
 import com.pwhintek.backend.dto.SignDTO;
 import com.pwhintek.backend.entity.User;
 import com.pwhintek.backend.exception.userinfo.ErrorLoginException;
@@ -131,19 +130,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String id = StpUtil.getLoginIdAsString();
         String key = USER_PREFIX + LOCK_PREFIX + id;
         String keyUser = USER_PREFIX + INFO_PREFIX + id;
+        // 保证更新操作幂等
         if (!redisStorageSolution.tryLock(key)) {
             throw UserInfoIdempotenceException.getUpdateInstance(updateInfo, type);
         }
         // 数据库更新
-        if (type.equals(DATABASE_PASSWORD)) {
+        if (type.equals(DATABASE_U_PASSWORD)) {
             updateInfo = DigestUtil.sha256Hex(updateInfo);
         }
         String s = JSONUtil.createObj().set("id", id).set(type, updateInfo).toString();
-        if (type.equals(DATABASE_USERNAME) && lambdaQuery().eq(User::getUsername, updateInfo).exists()) {
+        if (type.equals(DATABASE_U_USERNAME) && lambdaQuery().eq(User::getUsername, updateInfo).exists()) {
             throw UpdateFailException.getInstance(INVALID_USERNAME, s);
         }
         UpdateWrapper<User> wrapper = new UpdateWrapper<>();
-        wrapper.eq(DATABASE_ID, id).set(type, updateInfo);
+        wrapper.eq(DATABASE_U_ID, id).set(type, updateInfo);
         if (!update(wrapper)) {
             throw UpdateFailException.getInstance(s);
         }

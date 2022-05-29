@@ -84,6 +84,13 @@
             <version>1.30.0</version>
         </dependency>
 
+        <!-- Mybatis-Plus LeftJoin -->
+        <dependency>
+            <groupId>com.github.yulichang</groupId>
+            <artifactId>mybatis-plus-join</artifactId>
+            <version>1.2.4</version>
+        </dependency>
+
     </dependencies>
 
     <build>

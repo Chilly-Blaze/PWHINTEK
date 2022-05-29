@@ -8,7 +8,7 @@ import java.util.Date;
 
 import lombok.Data;
 
-import static com.pwhintek.backend.constant.UserInfoConstants.DATABASE_ID;
+import static com.pwhintek.backend.constant.UserInfoConstants.DATABASE_U_ID;
 
 /**
  * 用户信息表
@@ -19,7 +19,7 @@ public class User implements Serializable {
     /**
      * 用户唯一标识
      */
-    @TableId(DATABASE_ID)
+    @TableId(DATABASE_U_ID)
     private Long id;
 
     /**

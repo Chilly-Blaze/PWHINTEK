@@ -1,0 +1,17 @@
+@startuml
+class com.pwhintek.backend.config.SaInterceptorConfig {
++ void addInterceptors(InterceptorRegistry)
+}
+class com.pwhintek.backend.config.MybatisConfig {
++ MybatisPlusInterceptor mybatisPlusInterceptor()
+}
+class com.pwhintek.backend.config.PermissionQuery {
+- UserService userService
++ List<String> getPermissionList(Object,String)
++ List<String> getRoleList(Object,String)
+}
+
+
+org.springframework.web.servlet.config.annotation.WebMvcConfigurer <|.. com.pwhintek.backend.config.SaInterceptorConfig
+cn.dev33.satoken.stp.StpInterface <|.. com.pwhintek.backend.config.PermissionQuery
+@enduml

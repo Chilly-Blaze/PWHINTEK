@@ -11,12 +11,15 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static com.pwhintek.backend.constant.RedisConstants.CACHE_NULL_TTL;
+import static com.pwhintek.backend.constant.RedisConstants.LOCK_TTL;
 
 /**
  * 缓存问题解决
@@ -114,7 +117,7 @@ public class RedisStorageSolution {
     }
 
     // 开启一个线程池
-    private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);
+    private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(100);
 
     // 缓存击穿预防，防止热点数据缓存超时段时间大量请求打到数据库，逻辑过期
     public <O, ID> O queryWithLogicalExpire(String prefixID,
@@ -169,8 +172,24 @@ public class RedisStorageSolution {
         return object;
     }
 
+    // 分页缓存策略
+    public <O, ID> List<O> queryWithIdList(String prefix,
+                                           List<ID> idList,
+                                           Class<O> type,
+                                           Function<ID, O> queryById,
+                                           Long overDueTime,
+                                           TimeUnit unit) {
+        List<O> resultObjectList = new ArrayList<>();
+        // 调用空值存储，返回对象列表
+        for (ID id : idList) {
+            resultObjectList.add(queryWithPassThrough(prefix, id, type, queryById, overDueTime, unit));
+        }
+        // 返回完善后查找列表
+        return resultObjectList;
+    }
+
     public boolean tryLock(String key) {
-        Boolean flag = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", 10, TimeUnit.SECONDS);
+        Boolean flag = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", LOCK_TTL, TimeUnit.SECONDS);
         return BooleanUtil.isTrue(flag);  // 注意此处最好不要直接返回，Java会自动拆箱，可能会返回空指针（比如连接不上redis，此时flag就为空）
     }
 

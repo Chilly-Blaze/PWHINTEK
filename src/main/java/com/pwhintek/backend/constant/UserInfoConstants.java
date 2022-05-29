@@ -11,15 +11,14 @@ import java.util.List;
  * @since 2022 Apr 23 20:37
  */
 public class UserInfoConstants {
-    public static final String DATABASE_ID = "user_id";
-    public static final String DATABASE_USERNAME = "username";
-    public static final String DATABASE_PASSWORD = "password";
-    public static final String DATABASE_PORTRAIT = "portrait";
-    public static final String DATABASE_NICKNAME = "nickname";
-    public static final String DATABASE_SIGNATURE = "signature";
-    public static final String DATABASE_PERMISSION = "permission";
-    public static final String DATABASE_IS_DELETE = "is_delete";
-    public static final String DATABASE_CREATE_TIME = "create_time";
+    public static final String DATABASE_U_ID = "user_id";
+    public static final String DATABASE_U_USERNAME = "username";
+    public static final String DATABASE_U_PASSWORD = "password";
+    public static final String DATABASE_U_PORTRAIT = "portrait";
+    public static final String DATABASE_U_NICKNAME = "nickname";
+    public static final String DATABASE_U_PERMISSION = "permission";
+    public static final String DATABASE_U_IS_DELETE = "is_delete";
+    public static final String DATABASE_U_CREATE_TIME = "create_time";
 
     public static final String INVALID_USERNAME = "用户名";
     public static final String INVALID_PASSWORD = "密码";
