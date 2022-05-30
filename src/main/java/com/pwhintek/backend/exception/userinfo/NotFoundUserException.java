@@ -14,7 +14,7 @@ public class NotFoundUserException extends UserInfoException {
         super(message, data);
     }
 
-    public static NotFoundUserException newInstance() {
+    public static NotFoundUserException getInstance() {
         return new NotFoundUserException(NOT_FOUND_ERROR, null);
     }
 }

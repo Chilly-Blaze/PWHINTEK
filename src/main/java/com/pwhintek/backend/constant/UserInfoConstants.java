@@ -33,10 +33,8 @@ public class UserInfoConstants {
 
     public static final String DUPLICATION_SIGN_UP = "你曾经已经注册过了哦，我猜你可能忘记了密码？";
     public static final String DUPLICATION_LOGIN = "再怎么点也不会让你登录两次的啦！";
-    public static final String DUPLICATION_UPDATE = "别骂了别骂了，再骂信息要更新不上去啦！";
 
     public static final String UPDATE_DUPLICATION = "你的{}信息已经被人占用了！还是考虑一个新{}吧！";
-    public static final String UPDATE_ERROR = "你是不是想更新什么不得了的东西！";
 
-    public static final List<String> ALLOW_UPDATE = Arrays.asList("username", "password", "nickname", "signature", "portrait");
+    public static final List<String> U_ALLOW_UPDATE = Arrays.asList("username", "password", "nickname", "signature", "portrait");
 }

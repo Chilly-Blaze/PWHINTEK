@@ -100,8 +100,21 @@ public class ArticleTests {
     }
 
     @Test
-    void selectPageByIdTest() {
-        Result result = articleService.pageSelectById(1, "1518515100758265857");
-        System.out.println(result);
+    void selectPageTest() {
+        // Result result = articleService.pageSelectById(1, "1518515100758265857");
+        Result result = articleService.pageSelect(1);
+        List<DetailedArticleDTO> data = (List<DetailedArticleDTO>) result.getData();
+        for (DetailedArticleDTO datum : data) {
+            System.out.println(datum);
+        }
+    }
+
+    @Test
+    void wrapperTest() {
+        LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<Article>().select(Article::getId, Article::getCreateTime).orderByDesc(Article::getCreateTime);
+        Page<Article> page = new Page<>(1, 3);
+        for (Article record : articleService.list(wrapper)) {
+            System.out.println(record);
+        }
     }
 }

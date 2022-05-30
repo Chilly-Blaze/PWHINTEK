@@ -6,6 +6,8 @@ import com.pwhintek.backend.entity.Article;
 import com.baomidou.mybatisplus.extension.service.IService;
 import reactor.util.annotation.Nullable;
 
+import java.util.Map;
+
 /**
  * @author chillyblaze
  * 针对表【t_article(用户文章表)】的数据库操作Service
@@ -13,4 +15,8 @@ import reactor.util.annotation.Nullable;
  */
 public interface ArticleService extends MPJBaseService<Article> {
     Result pageSelectById(Integer num, String id);
+
+    Result pageSelect(Integer num);
+
+    Result updateArticle(Map<String, String> map);
 }

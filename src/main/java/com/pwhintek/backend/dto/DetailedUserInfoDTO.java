@@ -14,6 +14,8 @@ import java.util.Date;
  */
 @Data
 public class DetailedUserInfoDTO implements Serializable {
+    // TODO: 待定，是否加入id
+    // private String id;
     private String username;
     private String nickname;
     private String permission;

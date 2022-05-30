@@ -12,7 +12,7 @@ import com.pwhintek.backend.dto.SignDTO;
 import com.pwhintek.backend.entity.User;
 import com.pwhintek.backend.exception.userinfo.ErrorLoginException;
 import com.pwhintek.backend.exception.userinfo.NotFoundUserException;
-import com.pwhintek.backend.exception.userinfo.UpdateFailException;
+import com.pwhintek.backend.exception.userinfo.UserInfoUpdateFailException;
 import com.pwhintek.backend.exception.userinfo.UserInfoIdempotenceException;
 import com.pwhintek.backend.mapper.UserMapper;
 import com.pwhintek.backend.service.UserService;
@@ -106,7 +106,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public DetailedUserInfoDTO userInfo(String column, Function<String, User> method) {
         User user = redisStorageSolution.queryWithPassThrough(USER_PREFIX + INFO_PREFIX, column, User.class, method, USER_INFO_TTL, TimeUnit.MINUTES);
         if (ObjectUtil.isNull(user)) {
-            throw NotFoundUserException.newInstance();
+            throw NotFoundUserException.getInstance();
         }
         return BeanUtil.copyProperties(user, DetailedUserInfoDTO.class);
     }
@@ -140,12 +140,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         String s = JSONUtil.createObj().set("id", id).set(type, updateInfo).toString();
         if (type.equals(DATABASE_U_USERNAME) && lambdaQuery().eq(User::getUsername, updateInfo).exists()) {
-            throw UpdateFailException.getInstance(INVALID_USERNAME, s);
+            throw UserInfoUpdateFailException.getInstance(INVALID_USERNAME, s);
         }
         UpdateWrapper<User> wrapper = new UpdateWrapper<>();
         wrapper.eq(DATABASE_U_ID, id).set(type, updateInfo);
         if (!update(wrapper)) {
-            throw UpdateFailException.getInstance(s);
+            throw UserInfoUpdateFailException.getInstance(s);
         }
         // 删除redis信息
         redisStorageSolution.deleteByKey(keyUser);

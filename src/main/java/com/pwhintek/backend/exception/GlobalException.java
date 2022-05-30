@@ -3,6 +3,7 @@ package com.pwhintek.backend.exception;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.SaTokenException;
 import com.pwhintek.backend.dto.Result;
+import com.pwhintek.backend.exception.article.ArticleException;
 import com.pwhintek.backend.exception.userinfo.UserInfoException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -47,8 +48,20 @@ public class GlobalException {
      */
     @ExceptionHandler(UserInfoException.class)
     public Result handleUserInfoException(UserInfoException e) {
-        // TODO: 或许可以将错误的记录进行静态存储记录,发现一些不法用户恶意请求
+        // TODO: 或许可以只记录用户id和请求信息，精确定位非法用户
         log.error("{}\n{}\n{}", e.getClass(), e.getMessage(), e.getErrorData());
+        return Result.fail(e.getMessage());
+    }
+
+    /**
+     * 捕获输入信息错误异常，返回信息
+     *
+     * @author ChillyBlaze
+     * @since 22/04/2022 19:32
+     */
+    @ExceptionHandler(ArticleException.class)
+    public Result handleArticleException(ArticleException e) {
+        log.error("{}\n{}\n{}\n{}", e.getClass(), e.getMessage(), e.getId(), e.getData());
         return Result.fail(e.getMessage());
     }
 

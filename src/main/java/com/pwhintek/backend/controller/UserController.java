@@ -1,25 +1,21 @@
 package com.pwhintek.backend.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
-import cn.hutool.core.collection.ListUtil;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.pwhintek.backend.dto.Result;
 import com.pwhintek.backend.dto.SignDTO;
 import com.pwhintek.backend.entity.User;
-import com.pwhintek.backend.exception.userinfo.UpdateFailException;
+import com.pwhintek.backend.exception.userinfo.UserInfoUpdateFailException;
 import com.pwhintek.backend.exception.userinfo.UserInfoIdempotenceException;
 import com.pwhintek.backend.service.UserService;
-import com.pwhintek.backend.utils.RedisStorageSolution;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.PerformanceSensitive;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.Map;
 import java.util.Set;
 
-import static com.pwhintek.backend.constant.UserInfoConstants.ALLOW_UPDATE;
+import static com.pwhintek.backend.constant.UserInfoConstants.U_ALLOW_UPDATE;
 
 /**
  * 接收前端登录模块请求，控制用户登入登出
@@ -130,10 +126,10 @@ public class UserController {
     public Result updatePassword(@RequestBody Map<String, String> map) {
         Set<String> set = map.keySet();
         for (String s : set) {
-            if (!ALLOW_UPDATE.contains(s)) {
+            if (!U_ALLOW_UPDATE.contains(s)) {
                 String id = StpUtil.getLoginIdAsString();
                 String data = JSONUtil.createObj().set("id", id).set(s, map.get(s)).toString();
-                throw UpdateFailException.getInstance(data);
+                throw UserInfoUpdateFailException.getInstance(data);
             }
             userService.updateInfo(map.get(s), s);
         }
