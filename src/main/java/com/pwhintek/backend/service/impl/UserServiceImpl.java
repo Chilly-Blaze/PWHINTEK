@@ -46,6 +46,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @author ChillyBlaze
      */
     @Override
+    // TODO: 需要思考等幂性问题
     public void signUp(SignDTO signUpForm) {
         // 获取表单信息
         String username = signUpForm.getUsername();

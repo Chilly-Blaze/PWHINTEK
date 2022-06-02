@@ -123,7 +123,7 @@ public class UserController {
      * @since 24/04/2022 21:10
      */
     @PostMapping("/update")
-    public Result updatePassword(@RequestBody Map<String, String> map) {
+    public Result updateInfo(@RequestBody Map<String, String> map) {
         Set<String> set = map.keySet();
         for (String s : set) {
             if (!U_ALLOW_UPDATE.contains(s)) {

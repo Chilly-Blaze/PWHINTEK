@@ -46,11 +46,6 @@ public class Article implements Serializable {
     private String type;
 
     /**
-     * 收藏数
-     */
-    private Long likeNum;
-
-    /**
      * 作者
      */
     @TableField(DATABASE_A_UID)

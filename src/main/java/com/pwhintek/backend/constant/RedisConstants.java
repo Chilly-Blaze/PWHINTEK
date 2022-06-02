@@ -15,6 +15,7 @@ public class RedisConstants {
     public static final Long USER_INFO_TTL = 30L;
     public static final Long ARTICLE_TTL = 2L;
     public static final String INFO_PREFIX = "info:";
+    public static final String LIKE_COUNT_PREFIX = "like:count:";
 
     public static final Long LOCK_TTL = 10L;
     public static final String LOCK_PREFIX = "lock:";

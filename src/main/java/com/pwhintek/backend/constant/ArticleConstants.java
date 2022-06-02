@@ -1,8 +1,6 @@
 package com.pwhintek.backend.constant;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.ObjectUtil;
-import com.pwhintek.backend.entity.Article;
+import cn.hutool.core.collection.ListUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,7 +25,15 @@ public class ArticleConstants {
 
     public static final Integer PAGE_SIZE = 3;
 
+    public static final String UPDATE_INFO = "更新";
+    public static final String DELETE_INFO = "删除";
+    public static final String ARTICLE_NOT_FOUND_ERROR = "你想对虚空文章做什么操作吗！";
     public static final String PAGE_NOT_FOUND_ERROR = "再怎么找也没有啦！";
+    public static final String VERIFY_ERROR = "大胆！居然想{}别人的文章！";
+
+    public static final String REMOVE_LIKE_INFO = "取消点赞成功";
+    public static final String ADD_LIKE_INFO = "点赞成功";
 
     public static final List<String> A_ALLOW_UPDATE = Arrays.asList("id", "title", "description", "content", "type");
+    public static final List<String> A_ALLOW_INSERT = ListUtil.sub(A_ALLOW_UPDATE, 1, A_ALLOW_UPDATE.size());
 }

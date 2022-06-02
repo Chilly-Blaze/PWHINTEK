@@ -3,8 +3,6 @@ package com.pwhintek.backend.service;
 import com.github.yulichang.base.MPJBaseService;
 import com.pwhintek.backend.dto.Result;
 import com.pwhintek.backend.entity.Article;
-import com.baomidou.mybatisplus.extension.service.IService;
-import reactor.util.annotation.Nullable;
 
 import java.util.Map;
 
@@ -19,4 +17,10 @@ public interface ArticleService extends MPJBaseService<Article> {
     Result pageSelect(Integer num);
 
     Result updateArticle(Map<String, String> map);
+
+    Result addOrRemoveLike(Long id);
+
+    Result insertArticle(Map<String, String> map);
+
+    Result deleteArticle(Long id);
 }

@@ -1,6 +1,7 @@
 package com.pwhintek.backend.utils;
 
 import cn.hutool.core.util.BooleanUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -11,8 +12,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -80,15 +79,48 @@ public class RedisStorageSolution {
     }
 
     /**
+     * 键值自增
+     */
+    public void increaseKey(String key) {
+        // 判断值是否为整型
+        if (NumberUtil.isNumber(stringRedisTemplate.opsForValue().get(key))) {
+            stringRedisTemplate.opsForValue().increment(key);
+        } else {
+            throw new RuntimeException();
+        }
+    }
+
+    /**
+     * 键值自减
+     */
+    public void decreaseKey(String key) {
+        // 判断值是否为整型
+        if (NumberUtil.isNumber(stringRedisTemplate.opsForValue().get(key))) {
+            stringRedisTemplate.opsForValue().decrement(key);
+        } else {
+            throw new RuntimeException();
+        }
+    }
+
+    /**
      * 缓存穿透预防，防止无效请求过度打到数据库
      *
+     * @param prefix         Redis内前缀
+     * @param id             数据库查找id
+     * @param type           返回类型
+     * @param databaseMethod 通过id获得type的方法
+     * @param timeY          RedisTTL
+     * @param unitY          TimeUnit
+     * @param <O>            返回对象类型
+     * @param <ID>           id类型
+     * @return type对象
      * @author ChillyBlaze
      * @since 22/04/2022 21:02
      */
     public <O, ID> O queryWithPassThrough(String prefix,
                                           ID id,
                                           Class<O> type,
-                                          Function<ID, O> dataBaseMethod,
+                                          Function<ID, O> databaseMethod,
                                           Long timeY,
                                           TimeUnit unitY) {
         // 尝试从Redis查询缓存
@@ -103,7 +135,7 @@ public class RedisStorageSolution {
         }
 
         // 不存在，查询数据库
-        O object = dataBaseMethod.apply(id);  // 调用apply方法
+        O object = databaseMethod.apply(id);  // 调用apply方法
         // 数据库也不存在，返回错误
         if (ObjectUtil.isNull(object)) {
             // 将空值写入Redis
@@ -114,6 +146,32 @@ public class RedisStorageSolution {
         saveByTTL(key, object, timeY, unitY);
         // 返回
         return object;
+    }
+
+    /**
+     * 获取记录数的重写方法
+     *
+     * @return 指定内容的记录数
+     */
+    public <ID> Long queryWithPassThrough(String prefix,
+                                          ID id,
+                                          Function<ID, Long> databaseMethod,
+                                          Long timeY,
+                                          TimeUnit unitY) {
+        // 尝试从Redis查询缓存
+        String key = prefix + id;
+        String numS = stringRedisTemplate.opsForValue().get(key);
+        if (StrUtil.isNotBlank(numS)) {
+            assert numS != null;
+            return Long.valueOf(numS);
+        }
+
+        // 不存在，查询数据库
+        Long num = databaseMethod.apply(id);  // 调用apply方法
+        // 写入Redis
+        stringRedisTemplate.opsForValue().set(key, num.toString(), timeY, unitY);
+        // 返回
+        return num;
     }
 
     // 开启一个线程池
@@ -170,22 +228,6 @@ public class RedisStorageSolution {
         }
         // 返回过期的商铺信息
         return object;
-    }
-
-    // 分页缓存策略
-    public <O, ID> List<O> queryWithIdList(String prefix,
-                                           List<ID> idList,
-                                           Class<O> type,
-                                           Function<ID, O> queryById,
-                                           Long overDueTime,
-                                           TimeUnit unit) {
-        List<O> resultObjectList = new ArrayList<>();
-        // 调用空值存储，返回对象列表
-        for (ID id : idList) {
-            resultObjectList.add(queryWithPassThrough(prefix, id, type, queryById, overDueTime, unit));
-        }
-        // 返回完善后查找列表
-        return resultObjectList;
     }
 
     public boolean tryLock(String key) {

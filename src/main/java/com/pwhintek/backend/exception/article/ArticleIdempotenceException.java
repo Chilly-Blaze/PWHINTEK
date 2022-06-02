@@ -6,6 +6,8 @@ import com.pwhintek.backend.entity.Article;
 import static com.pwhintek.backend.constant.GlobalConstants.DUPLICATION_UPDATE;
 
 /**
+ * 重复更新异常
+ *
  * @author ChillyBlaze
  * @version 1.0
  * @since 2022 May 30 22:52
@@ -25,5 +27,9 @@ public class ArticleIdempotenceException extends ArticleException {
     public static ArticleIdempotenceException getInstance(Article data) {
         String s = JSONUtil.toJsonStr(data);
         return new ArticleIdempotenceException(DUPLICATION_UPDATE, s);
+    }
+
+    public static ArticleIdempotenceException getInstance(String data) {
+        return new ArticleIdempotenceException(DUPLICATION_UPDATE, data);
     }
 }
