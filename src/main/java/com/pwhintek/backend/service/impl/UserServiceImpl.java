@@ -132,26 +132,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String key = USER_PREFIX + LOCK_PREFIX + id;
         String keyUser = USER_PREFIX + INFO_PREFIX + id;
         // 保证更新操作幂等
-        if (!redisStorageSolution.tryLock(key)) {
-            throw UserInfoIdempotenceException.getUpdateInstance(updateInfo, type);
+        try {
+            if (!redisStorageSolution.tryLock(key)) {
+                throw UserInfoIdempotenceException.getUpdateInstance(updateInfo, type);
+            }
+            // 数据库更新
+            if (type.equals(DATABASE_U_PASSWORD)) {
+                updateInfo = DigestUtil.sha256Hex(updateInfo);
+            }
+            String s = JSONUtil.createObj().set("id", id).set(type, updateInfo).toString();
+            if (type.equals(DATABASE_U_USERNAME) && lambdaQuery().eq(User::getUsername, updateInfo).exists()) {
+                throw UserInfoUpdateFailException.getInstance(INVALID_USERNAME, s);
+            }
+            UpdateWrapper<User> wrapper = new UpdateWrapper<>();
+            wrapper.eq(DATABASE_U_ID, id).set(type, updateInfo);
+            if (!update(wrapper)) {
+                throw UserInfoUpdateFailException.getInstance(s);
+            }
+            // 删除redis信息
+            redisStorageSolution.deleteByKey(keyUser);
+        } finally {
+            // 释放锁
+            redisStorageSolution.unlock(key);
         }
-        // 数据库更新
-        if (type.equals(DATABASE_U_PASSWORD)) {
-            updateInfo = DigestUtil.sha256Hex(updateInfo);
-        }
-        String s = JSONUtil.createObj().set("id", id).set(type, updateInfo).toString();
-        if (type.equals(DATABASE_U_USERNAME) && lambdaQuery().eq(User::getUsername, updateInfo).exists()) {
-            throw UserInfoUpdateFailException.getInstance(INVALID_USERNAME, s);
-        }
-        UpdateWrapper<User> wrapper = new UpdateWrapper<>();
-        wrapper.eq(DATABASE_U_ID, id).set(type, updateInfo);
-        if (!update(wrapper)) {
-            throw UserInfoUpdateFailException.getInstance(s);
-        }
-        // 删除redis信息
-        redisStorageSolution.deleteByKey(keyUser);
-        // 释放锁
-        redisStorageSolution.unlock(key);
     }
 }
 

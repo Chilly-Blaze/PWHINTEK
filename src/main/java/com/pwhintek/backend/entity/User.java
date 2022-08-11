@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 import lombok.Data;
+import org.springframework.data.annotation.Id;
 
 import static com.pwhintek.backend.constant.UserInfoConstants.DATABASE_U_ID;
 
@@ -19,7 +20,7 @@ public class User implements Serializable {
     /**
      * 用户唯一标识
      */
-    @TableId(DATABASE_U_ID)
+    @TableId(value = DATABASE_U_ID, type = IdType.AUTO)
     private Long id;
 
     /**

@@ -4,13 +4,12 @@ spring:
     name: hmdp
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://172.17.0.2:3306/pwhintek?useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://172.17.0.2:3306/pwhintek?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
     password: 123456
   redis:
     host: 172.17.0.3
     port: 6379
-    password: 1351
     lettuce:
       pool:
         max-active: 10

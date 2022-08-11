@@ -88,8 +88,9 @@ public class UserController {
      */
     @GetMapping("/my_info")
     public Result myInfo() {
-        String id = StpUtil.getLoginIdAsString();
-        return Result.ok(userService.userInfo(id, userService::getById));
+        if (StpUtil.isLogin())
+            return Result.ok(userService.userInfo(StpUtil.getLoginIdAsString(), userService::getById));
+        else return Result.ok();
     }
 
     /**

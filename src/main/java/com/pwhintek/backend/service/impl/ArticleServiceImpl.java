@@ -98,15 +98,18 @@ public class ArticleServiceImpl extends MPJBaseServiceImpl<MPJBaseMapper<Article
         String lockKey = ARTICLE_PREFIX + LOCK_PREFIX + uid;
         String articleKey = ARTICLE_PREFIX + INFO_PREFIX + id;
         // 保证更新操作幂等
-        if (!redisStorageSolution.tryLock(lockKey)) {
-            throw ArticleIdempotenceException.getInstance(article);
+        try {
+            if (!redisStorageSolution.tryLock(lockKey)) {
+                throw ArticleIdempotenceException.getInstance(article);
+            }
+            // 更新数据库
+            updateById(article);
+            // 删除Redis缓存
+            redisStorageSolution.deleteByKey(articleKey);
+        } finally {
+            // 释放锁
+            redisStorageSolution.unlock(lockKey);
         }
-        // 更新数据库
-        updateById(article);
-        // 删除Redis缓存
-        redisStorageSolution.deleteByKey(articleKey);
-        // 释放锁
-        redisStorageSolution.unlock(lockKey);
         return Result.ok();
     }
 
@@ -114,7 +117,7 @@ public class ArticleServiceImpl extends MPJBaseServiceImpl<MPJBaseMapper<Article
     public Result addOrRemoveLike(Long id) {
         // 校验
         // 文章是否存在
-        if (NumberUtil.equals(count(new LambdaQueryWrapper<Article>().eq(Article::getId, "1")), 0)) {
+        if (NumberUtil.equals(count(new LambdaQueryWrapper<Article>().eq(Article::getId, id)), 0)) {
             // 不存在，抛出异常
             throw NotFoundArticleException.getInstance(id.toString());
         }
@@ -122,29 +125,32 @@ public class ArticleServiceImpl extends MPJBaseServiceImpl<MPJBaseMapper<Article
         Long uid = StpUtil.getLoginIdAsLong();
         String lockKey = ARTICLE_PREFIX + LOCK_PREFIX + uid;
         // 保证用户操作幂等性
-        if (!redisStorageSolution.tryLock(lockKey)) {
-            throw ArticleIdempotenceException.getInstance(id.toString());
-        }
-        // 调用queryWithPassThrough，保证Redis中有当前点赞记录
-        Function<Long, Long> c = r -> likeMappingService.count(new LambdaQueryWrapper<LikeMapping>()
-                .eq(LikeMapping::getArticleId, r));
-        redisStorageSolution.queryWithPassThrough(ARTICLE_PREFIX + LIKE_COUNT_PREFIX, id, c, ARTICLE_TTL, TimeUnit.DAYS);
-        // 是否已经点过赞，直接调用删除操作查看返回值
-        String key = ARTICLE_PREFIX + LIKE_COUNT_PREFIX + id;
-        boolean isOk = likeMappingService.remove(new LambdaQueryWrapper<LikeMapping>().eq(LikeMapping::getArticleId, id).eq(LikeMapping::getUserId, uid));
-        if (isOk) {
-            redisStorageSolution.decreaseKey(key);
+        try {
+            if (!redisStorageSolution.tryLock(lockKey)) {
+                throw ArticleIdempotenceException.getInstance(id.toString());
+            }
+            // 调用queryWithPassThrough，保证Redis中有当前点赞记录
+            Function<Long, Long> c = r -> likeMappingService.count(new LambdaQueryWrapper<LikeMapping>()
+                    .eq(LikeMapping::getArticleId, r));
+            redisStorageSolution.queryWithPassThrough(ARTICLE_PREFIX + LIKE_COUNT_PREFIX, id, c, ARTICLE_TTL, TimeUnit.DAYS);
+            // 是否已经点过赞，直接调用删除操作查看返回值
+            String key = ARTICLE_PREFIX + LIKE_COUNT_PREFIX + id;
+            boolean isOk = likeMappingService.remove(new LambdaQueryWrapper<LikeMapping>().eq(LikeMapping::getArticleId, id).eq(LikeMapping::getUserId, uid));
+            if (isOk) {
+                redisStorageSolution.decreaseKey(key);
+                redisStorageSolution.unlock(lockKey);
+                return Result.ok(REMOVE_LIKE_INFO);
+            }
+            // 未点过，添加数据库内容
+            LikeMapping entity = new LikeMapping();
+            entity.setArticleId(id);
+            entity.setUserId(uid);
+            // 更新数据
+            likeMappingService.save(entity);
+            redisStorageSolution.increaseKey(key);
+        } finally {
             redisStorageSolution.unlock(lockKey);
-            return Result.ok(REMOVE_LIKE_INFO);
         }
-        // 未点过，添加数据库内容
-        LikeMapping entity = new LikeMapping();
-        entity.setArticleId(id);
-        entity.setUserId(uid);
-        // 更新数据
-        likeMappingService.save(entity);
-        redisStorageSolution.increaseKey(key);
-        redisStorageSolution.unlock(lockKey);
         return Result.ok(ADD_LIKE_INFO);
     }
 
@@ -158,13 +164,16 @@ public class ArticleServiceImpl extends MPJBaseServiceImpl<MPJBaseMapper<Article
         article.setUid(Long.valueOf(uid));
         // 保证幂等性
         String lockKey = ARTICLE_PREFIX + LOCK_PREFIX + uid;
-        if (!redisStorageSolution.tryLock(lockKey)) {
-            throw ArticleIdempotenceException.getInstance(article);
+        try {
+            if (!redisStorageSolution.tryLock(lockKey)) {
+                throw ArticleIdempotenceException.getInstance(article);
+            }
+            // 插入文章
+            save(article);
+            // 释放锁
+        } finally {
+            redisStorageSolution.unlock(lockKey);
         }
-        // 插入文章
-        save(article);
-        // 释放锁
-        redisStorageSolution.unlock(lockKey);
         return Result.ok();
     }
 
