@@ -29,12 +29,15 @@ public class UserInfoConstants {
     public static final String VERIFY_ERROR = "用户名或密码输错啦";
     public static final String NO_LOGIN_ERROR = "你还没有登录呢！";
 
-    public static final String NOT_FOUND_ERROR = "遇到了奇怪问题，居然没找到这个用户";
+    public static final String NOT_FOUND_USER_ERROR = "遇到了奇怪问题，居然没找到这个用户";
+    public static final String NOT_FOUND_AVATAR_ERROR = "遇到了奇怪问题，居然没找到这个头像";
 
     public static final String DUPLICATION_SIGN_UP = "你曾经已经注册过了哦，我猜你可能忘记了密码？";
     public static final String DUPLICATION_LOGIN = "再怎么点也不会让你登录两次的啦！";
 
     public static final String UPDATE_DUPLICATION = "你的{}信息已经被人占用了！还是考虑一个新{}吧！";
 
-    public static final List<String> U_ALLOW_UPDATE = Arrays.asList("username", "password", "nickname", "signature", "portrait");
+    public static final List<String> U_ALLOW_UPDATE = Arrays.asList(DATABASE_U_USERNAME, DATABASE_U_PASSWORD, DATABASE_U_NICKNAME);
+    public static final String U_AVATAR_DIR = "avatar/";
+    public static final String U_DEFAULT_AVATAR_NAME = "default.png";
 }

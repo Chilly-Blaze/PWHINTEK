@@ -1,13 +1,12 @@
 package com.pwhintek.backend.service;
 
-import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.pwhintek.backend.dto.DetailedUserInfoDTO;
-import com.pwhintek.backend.dto.Result;
 import com.pwhintek.backend.dto.SignDTO;
 import com.pwhintek.backend.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.pwhintek.backend.utils.RedisStorageSolution;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.function.Function;
 
 /**
@@ -27,4 +26,6 @@ public interface UserService extends IService<User> {
     void updateInfo(String updateInfo, String type);
 
     void deleteUser(String id);
+
+    String updateAvatar(MultipartFile file) throws IOException;
 }

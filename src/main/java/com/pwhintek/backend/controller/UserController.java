@@ -1,21 +1,26 @@
 package com.pwhintek.backend.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.json.JSONUtil;
 import com.pwhintek.backend.dto.Result;
 import com.pwhintek.backend.dto.SignDTO;
 import com.pwhintek.backend.entity.User;
-import com.pwhintek.backend.exception.userinfo.UserInfoUpdateFailException;
+import com.pwhintek.backend.exception.userinfo.NotFoundInfoException;
 import com.pwhintek.backend.exception.userinfo.UserInfoIdempotenceException;
+import com.pwhintek.backend.exception.userinfo.UserInfoUpdateFailException;
 import com.pwhintek.backend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
 import static com.pwhintek.backend.constant.UserInfoConstants.U_ALLOW_UPDATE;
+import static com.pwhintek.backend.constant.UserInfoConstants.U_AVATAR_DIR;
 
 /**
  * 接收前端登录模块请求，控制用户登入登出
@@ -137,4 +142,22 @@ public class UserController {
         return Result.ok();
     }
 
+    /**
+     * 更换头像
+     */
+    @PostMapping("/upd_avatar")
+    public Result updateAvatar(@RequestBody MultipartFile file) throws IOException {
+        return Result.ok(userService.updateAvatar(file));
+    }
+
+    /**
+     * 获取头像
+     */
+    @GetMapping("/gt_avatar/{name}")
+    public Result getAvatar(@PathVariable("name") String name) {
+        if (!FileUtil.exist(U_AVATAR_DIR + name)) {
+            throw NotFoundInfoException.getAvatarInstance();
+        }
+        return Result.ok(FileUtil.readBytes(U_AVATAR_DIR + name));
+    }
 }

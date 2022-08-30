@@ -2,10 +2,12 @@ package com.pwhintek.backend;
 
 import cn.dev33.satoken.fun.SaParamRetFunction;
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.func.Func;
 import cn.hutool.core.lang.func.Func0;
 import cn.hutool.core.lang.func.Func1;
 import cn.hutool.core.lang.func.LambdaUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -142,6 +145,12 @@ class LoginModuleTests {
     void testStaticList() {
         final List<String> l = Arrays.asList("123", "1", "2");
         System.out.println(l.contains("123"));
+    }
+
+    @Test
+    void testUploader() {
+        System.out.println(IdUtil.fastSimpleUUID());
+        System.out.println(IdUtil.simpleUUID());
     }
 
 }

@@ -2,6 +2,8 @@ package com.pwhintek.backend.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
@@ -11,16 +13,18 @@ import com.pwhintek.backend.dto.DetailedUserInfoDTO;
 import com.pwhintek.backend.dto.SignDTO;
 import com.pwhintek.backend.entity.User;
 import com.pwhintek.backend.exception.userinfo.ErrorLoginException;
-import com.pwhintek.backend.exception.userinfo.NotFoundUserException;
-import com.pwhintek.backend.exception.userinfo.UserInfoUpdateFailException;
+import com.pwhintek.backend.exception.userinfo.NotFoundInfoException;
 import com.pwhintek.backend.exception.userinfo.UserInfoIdempotenceException;
+import com.pwhintek.backend.exception.userinfo.UserInfoUpdateFailException;
 import com.pwhintek.backend.mapper.UserMapper;
 import com.pwhintek.backend.service.UserService;
 import com.pwhintek.backend.utils.RedisStorageSolution;
 import com.pwhintek.backend.utils.RegexUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -107,7 +111,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public DetailedUserInfoDTO userInfo(String column, Function<String, User> method) {
         User user = redisStorageSolution.queryWithPassThrough(USER_PREFIX + INFO_PREFIX, column, User.class, method, USER_INFO_TTL, TimeUnit.MINUTES);
         if (ObjectUtil.isNull(user)) {
-            throw NotFoundUserException.getInstance();
+            throw NotFoundInfoException.getUserInstance();
         }
         return BeanUtil.copyProperties(user, DetailedUserInfoDTO.class);
     }
@@ -125,6 +129,37 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         redisStorageSolution.deleteByKey(USER_PREFIX + INFO_PREFIX + id);
     }
 
+    /**
+     * 更新个人头像信息
+     *
+     * @param file 用户上传文件
+     * @return 生成新头像名称
+     */
+    @Override
+    public String updateAvatar(MultipartFile file) throws IOException {
+        // 从数据库获取个人头像路径
+        String portrait = getById(StpUtil.getLoginIdAsString()).getPortrait();
+        // 删除原有头像
+        if (!portrait.equals("default.png")) {
+            FileUtil.del(U_AVATAR_DIR + portrait);
+        }
+
+        // 生成随机名称
+        String filename = IdUtil.fastSimpleUUID() + "." + FileUtil.getSuffix(file.getOriginalFilename());
+        // 存储图片
+        FileUtil.writeFromStream(file.getInputStream(), U_AVATAR_DIR + filename);
+        // 更新头像名称信息
+        updateInfo(filename, DATABASE_U_PORTRAIT);
+        // 返回文件名称
+        return filename;
+    }
+
+    /**
+     * 更新个人指定信息
+     *
+     * @param updateInfo 修改信息内容
+     * @param type       DATABASE_U开头常量
+     */
     public void updateInfo(String updateInfo,
                            String type) {
         // 获取锁
@@ -137,10 +172,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 throw UserInfoIdempotenceException.getUpdateInstance(updateInfo, type);
             }
             // 数据库更新
+            // 密码需要加密
             if (type.equals(DATABASE_U_PASSWORD)) {
                 updateInfo = DigestUtil.sha256Hex(updateInfo);
             }
             String s = JSONUtil.createObj().set("id", id).set(type, updateInfo).toString();
+            // 用户名不允许重复
             if (type.equals(DATABASE_U_USERNAME) && lambdaQuery().eq(User::getUsername, updateInfo).exists()) {
                 throw UserInfoUpdateFailException.getInstance(INVALID_USERNAME, s);
             }
