@@ -14,7 +14,7 @@ public class UserInfoConstants {
     public static final String DATABASE_U_ID = "user_id";
     public static final String DATABASE_U_USERNAME = "username";
     public static final String DATABASE_U_PASSWORD = "password";
-    public static final String DATABASE_U_PORTRAIT = "portrait";
+    public static final String DATABASE_U_AVATAR = "avatar";
     public static final String DATABASE_U_NICKNAME = "nickname";
     public static final String DATABASE_U_PERMISSION = "permission";
     public static final String DATABASE_U_IS_DELETE = "is_delete";

@@ -1,8 +1,6 @@
 package com.pwhintek.backend;
 
 import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.util.NumberUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -22,14 +20,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static com.pwhintek.backend.constant.ArticleConstants.A_ALLOW_UPDATE;
-import static com.pwhintek.backend.constant.RedisConstants.ARTICLE_PREFIX;
-import static com.pwhintek.backend.constant.RedisConstants.ARTICLE_TTL;
 
 /**
  * 文章管理测试类
@@ -71,7 +66,7 @@ public class ArticleTests {
                 .selectAll(Article.class)
                 .selectAs(Article::getId, DetailedArticleDTO::getId)
                 .selectAs(User::getId, DetailedArticleDTO::getUid)
-                .select(User::getUsername, User::getNickname, User::getPortrait)
+                .select(User::getUsername, User::getNickname, User::getAvatar)
                 .leftJoin(User.class, User::getId, Article::getUid));
         List<DetailedArticleDTO> records = page.getRecords();
         for (DetailedArticleDTO record : records) {
@@ -90,7 +85,7 @@ public class ArticleTests {
         //         .selectAll(Article.class)
         //         .selectAs(Article::getId, DetailedArticleDTO::getId)
         //         .selectAs(User::getId, DetailedArticleDTO::getUid)
-        //         .select(User::getUsername, User::getNickname, User::getPortrait)
+        //         .select(User::getUsername, User::getNickname, User::getAvatar)
         //         .leftJoin(User.class, User::getId, Article::getUid)
         //         .eq(Article::getId, r));
         // List<DetailedArticleDTO> dtos = redisStorageSolution.queryWithIdList(ARTICLE_PREFIX, listI, DetailedArticleDTO.class, f, ARTICLE_TTL, TimeUnit.DAYS);
@@ -105,7 +100,7 @@ public class ArticleTests {
                 .selectAll(Article.class)
                 .selectAs(Article::getId, DetailedArticleDTO::getId)
                 .selectAs(User::getId, DetailedArticleDTO::getUid)
-                .select(User::getUsername, User::getNickname, User::getPortrait)
+                .select(User::getUsername, User::getNickname, User::getAvatar)
                 .leftJoin(User.class, User::getId, Article::getUid)
                 .eq(Article::getId, r));
         System.out.println(f.apply(1L));

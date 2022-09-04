@@ -67,7 +67,7 @@ public class DetailedArticleDTO implements Serializable {
     /**
      * 用户头像
      */
-    private String portrait;
+    private String avatar;
 
     @Serial
     @TableField(exist = false)

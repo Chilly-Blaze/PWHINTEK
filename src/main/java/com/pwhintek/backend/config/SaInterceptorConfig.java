@@ -27,7 +27,7 @@ public class SaInterceptorConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new SaRouteInterceptor(
                         (request, response, handler) -> {
-                            SaRouter.match("/user/**").notMatch("/user/signup", "/user/login", "/user/info/**", "/user/test", "/user/my_info").check(r -> StpUtil.checkLogin());
+                            SaRouter.match("/user/**").notMatch("/user/signup", "/user/login", "/user/info/**", "/user/test", "/user/my_info", "/user/gt_avatar/**").check(r -> StpUtil.checkLogin());
                             SaRouter.match("/article/**").notMatch("/article/p/**").check(r -> StpUtil.checkLogin());
                         }))
                 .addPathPatterns("/**");

@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -138,18 +139,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public String updateAvatar(MultipartFile file) throws IOException {
         // 从数据库获取个人头像路径
-        String portrait = getById(StpUtil.getLoginIdAsString()).getPortrait();
+        String avatar = getById(StpUtil.getLoginIdAsString()).getAvatar();
         // 删除原有头像
-        if (!portrait.equals("default.png")) {
-            FileUtil.del(U_AVATAR_DIR + portrait);
+        if (!avatar.equals("default.png")) {
+            FileUtil.del(U_AVATAR_DIR + avatar);
         }
 
         // 生成随机名称
-        String filename = IdUtil.fastSimpleUUID() + "." + FileUtil.getSuffix(file.getOriginalFilename());
+        String filename = IdUtil.fastSimpleUUID() + "." + StrUtil.subAfter(file.getContentType(), "/", true);
         // 存储图片
         FileUtil.writeFromStream(file.getInputStream(), U_AVATAR_DIR + filename);
         // 更新头像名称信息
-        updateInfo(filename, DATABASE_U_PORTRAIT);
+        updateInfo(filename, DATABASE_U_AVATAR);
         // 返回文件名称
         return filename;
     }

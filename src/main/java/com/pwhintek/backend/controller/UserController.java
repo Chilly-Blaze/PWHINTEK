@@ -11,6 +11,7 @@ import com.pwhintek.backend.exception.userinfo.UserInfoIdempotenceException;
 import com.pwhintek.backend.exception.userinfo.UserInfoUpdateFailException;
 import com.pwhintek.backend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -153,11 +154,12 @@ public class UserController {
     /**
      * 获取头像
      */
-    @GetMapping("/gt_avatar/{name}")
-    public Result getAvatar(@PathVariable("name") String name) {
+    @CrossOrigin
+    @GetMapping(value = "/gt_avatar/{name}", produces = MediaType.IMAGE_PNG_VALUE)
+    public byte[] getAvatar(@PathVariable("name") String name) {
         if (!FileUtil.exist(U_AVATAR_DIR + name)) {
             throw NotFoundInfoException.getAvatarInstance();
         }
-        return Result.ok(FileUtil.readBytes(U_AVATAR_DIR + name));
+        return FileUtil.readBytes(U_AVATAR_DIR + name);
     }
 }

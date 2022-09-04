@@ -20,5 +20,5 @@ public class DetailedUserInfoDTO implements Serializable {
     private String nickname;
     private String permission;
     private Date createTime;
-    private String portrait;
+    private String avatar;
 }

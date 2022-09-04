@@ -1,13 +1,14 @@
 package com.pwhintek.backend.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import lombok.Data;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
-
-import lombok.Data;
-import org.springframework.data.annotation.Id;
 
 import static com.pwhintek.backend.constant.UserInfoConstants.DATABASE_U_ID;
 
@@ -51,7 +52,7 @@ public class User implements Serializable {
     /**
      * 用户头像
      */
-    private String portrait;
+    private String avatar;
 
     /**
      * 逻辑删除

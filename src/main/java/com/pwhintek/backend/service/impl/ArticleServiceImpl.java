@@ -16,8 +16,8 @@ import com.pwhintek.backend.entity.LikeMapping;
 import com.pwhintek.backend.entity.User;
 import com.pwhintek.backend.exception.article.ArticleDeleteFailException;
 import com.pwhintek.backend.exception.article.ArticleIdempotenceException;
-import com.pwhintek.backend.exception.article.NotFoundArticleException;
 import com.pwhintek.backend.exception.article.ArticleUpdateFailException;
+import com.pwhintek.backend.exception.article.NotFoundArticleException;
 import com.pwhintek.backend.mapper.ArticleMapper;
 import com.pwhintek.backend.service.ArticleService;
 import com.pwhintek.backend.service.LikeMappingService;
@@ -27,7 +27,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +35,6 @@ import java.util.function.Function;
 
 import static com.pwhintek.backend.constant.ArticleConstants.*;
 import static com.pwhintek.backend.constant.RedisConstants.*;
-import static com.pwhintek.backend.constant.RedisConstants.LOCK_PREFIX;
 
 /**
  * @author chillyblaze
@@ -207,7 +205,7 @@ public class ArticleServiceImpl extends MPJBaseServiceImpl<MPJBaseMapper<Article
                 .selectAll(Article.class)
                 .selectAs(Article::getId, DetailedArticleDTO::getId)
                 .selectAs(User::getId, DetailedArticleDTO::getUid)
-                .select(User::getUsername, User::getNickname, User::getPortrait)
+                .select(User::getUsername, User::getNickname, User::getAvatar)
                 .leftJoin(User.class, User::getId, Article::getUid)
                 .eq(Article::getId, r));
         Function<Long, Long> c = r -> likeMappingService.count(new LambdaQueryWrapper<LikeMapping>()
